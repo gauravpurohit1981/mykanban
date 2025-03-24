@@ -1,6 +1,7 @@
 
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import pg from 'pg';
+const { Pool } = pg;
 import { tasks, type Task, type InsertTask } from "@shared/schema";
 import { eq } from 'drizzle-orm';
 import { IStorage } from './storage';
