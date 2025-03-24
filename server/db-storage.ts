@@ -1,64 +1,103 @@
 
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
-const { Pool } = pg;
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { tasks, type Task, type InsertTask } from "@shared/schema";
-import { eq } from 'drizzle-orm';
-import { IStorage } from './storage';
+import { eq } from "drizzle-orm";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const db = drizzle(pool);
 
 export class DbStorage implements IStorage {
-  private db;
-
-  constructor() {
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-    this.db = drizzle(pool);
-  }
-
   async getAllTasks(): Promise<Task[]> {
-    return await this.db.select().from(tasks);
+    try {
+      return await db.select().from(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      throw error;
+    }
   }
 
   async getTask(id: number): Promise<Task | undefined> {
-    const result = await this.db.select().from(tasks).where(eq(tasks.id, id));
-    return result[0];
+    try {
+      const result = await db.select().from(tasks).where(eq(tasks.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      throw error;
+    }
   }
 
   async createTask(task: InsertTask): Promise<Task> {
-    const result = await this.db.insert(tasks).values(task).returning();
-    return result[0];
+    try {
+      const result = await db.insert(tasks).values(task).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   }
 
   async updateTask(id: number, taskUpdate: Partial<InsertTask>): Promise<Task | undefined> {
-    const result = await this.db.update(tasks)
-      .set(taskUpdate)
-      .where(eq(tasks.id, id))
-      .returning();
-    return result[0];
+    try {
+      const result = await db.update(tasks)
+        .set(taskUpdate)
+        .where(eq(tasks.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
   }
 
   async deleteTask(id: number): Promise<boolean> {
-    const result = await this.db.delete(tasks).where(eq(tasks.id, id));
-    return result.length > 0;
+    try {
+      const result = await db.delete(tasks)
+        .where(eq(tasks.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
   }
 
   async getTasksByCategory(category: string): Promise<Task[]> {
-    return await this.db.select().from(tasks).where(eq(tasks.category, category));
+    try {
+      return await db.select()
+        .from(tasks)
+        .where(eq(tasks.category, category));
+    } catch (error) {
+      console.error('Error fetching tasks by category:', error);
+      throw error;
+    }
   }
 
   async getTasksByStatus(status: string): Promise<Task[]> {
-    return await this.db.select().from(tasks).where(eq(tasks.status, status));
+    try {
+      return await db.select()
+        .from(tasks)
+        .where(eq(tasks.status, status));
+    } catch (error) {
+      console.error('Error fetching tasks by status:', error);
+      throw error;
+    }
   }
 
   async getTasksByDueDate(date: Date): Promise<Task[]> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-    
-    return await this.db.select().from(tasks)
-      .where(sql`${tasks.dueDate} BETWEEN ${startOfDay} AND ${endOfDay}`);
+    try {
+      const targetDate = new Date(date);
+      targetDate.setHours(0, 0, 0, 0);
+      
+      return await db.select()
+        .from(tasks)
+        .where(eq(tasks.dueDate, targetDate));
+    } catch (error) {
+      console.error('Error fetching tasks by due date:', error);
+      throw error;
+    }
   }
 }
