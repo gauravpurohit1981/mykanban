@@ -1,6 +1,7 @@
 
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import pkg from 'pg';
+const { Pool } = pkg;
 import { tasks, type Task, type InsertTask } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
