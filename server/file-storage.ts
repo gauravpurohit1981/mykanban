@@ -1,23 +1,35 @@
-import { tasks, type Task, type InsertTask } from "@shared/schema";
 
-export interface IStorage {
-  getAllTasks(): Promise<Task[]>;
-  getTask(id: number): Promise<Task | undefined>;
-  createTask(task: InsertTask): Promise<Task>;
-  updateTask(id: number, task: Partial<InsertTask>): Promise<Task | undefined>;
-  deleteTask(id: number): Promise<boolean>;
-  getTasksByCategory(category: string): Promise<Task[]>;
-  getTasksByStatus(status: string): Promise<Task[]>;
-  getTasksByDueDate(date: Date): Promise<Task[]>;
-}
+import fs from 'fs/promises';
+import { Task, InsertTask, IStorage } from './storage';
 
-export class MemStorage implements IStorage {
+const DATA_FILE = './data/tasks.json';
+
+export class FileStorage implements IStorage {
   private tasks: Map<number, Task>;
   private currentId: number;
 
   constructor() {
     this.tasks = new Map();
     this.currentId = 1;
+    this.loadData();
+  }
+
+  private async loadData() {
+    try {
+      await fs.mkdir('./data', { recursive: true });
+      const data = await fs.readFile(DATA_FILE, 'utf-8');
+      const tasks = JSON.parse(data);
+      this.tasks = new Map(tasks.map((t: Task) => [t.id, t]));
+      this.currentId = Math.max(...Array.from(this.tasks.keys()), 0) + 1;
+    } catch (error) {
+      this.tasks = new Map();
+      this.currentId = 1;
+    }
+  }
+
+  private async saveData() {
+    const tasks = Array.from(this.tasks.values());
+    await fs.writeFile(DATA_FILE, JSON.stringify(tasks, null, 2));
   }
 
   async getAllTasks(): Promise<Task[]> {
@@ -32,22 +44,24 @@ export class MemStorage implements IStorage {
     const id = this.currentId++;
     const task: Task = { ...insertTask, id };
     this.tasks.set(id, task);
+    await this.saveData();
     return task;
   }
 
   async updateTask(id: number, taskUpdate: Partial<InsertTask>): Promise<Task | undefined> {
     const existingTask = this.tasks.get(id);
-    if (!existingTask) {
-      return undefined;
-    }
+    if (!existingTask) return undefined;
     
     const updatedTask: Task = { ...existingTask, ...taskUpdate };
     this.tasks.set(id, updatedTask);
+    await this.saveData();
     return updatedTask;
   }
 
   async deleteTask(id: number): Promise<boolean> {
-    return this.tasks.delete(id);
+    const deleted = this.tasks.delete(id);
+    if (deleted) await this.saveData();
+    return deleted;
   }
 
   async getTasksByCategory(category: string): Promise<Task[]> {
@@ -63,7 +77,6 @@ export class MemStorage implements IStorage {
   }
 
   async getTasksByDueDate(date: Date): Promise<Task[]> {
-    // Convert date to start of day for comparison
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
     
@@ -74,6 +87,3 @@ export class MemStorage implements IStorage {
     });
   }
 }
-
-import { FileStorage } from './file-storage';
-export const storage = new FileStorage();
