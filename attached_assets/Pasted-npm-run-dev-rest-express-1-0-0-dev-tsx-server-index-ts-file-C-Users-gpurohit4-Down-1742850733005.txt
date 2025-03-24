@@ -1,0 +1,18 @@
+npm run dev   
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+file:///C:/Users/gpurohit4/Downloads/TaskTrackerPro/mykanban/server/db-storage.ts:1
+var __defProp=Object.defineProperty;var __name=(target,value)=>__defProp(target,"name",{value,configurable:true});import{drizzle}from"drizzle-orm/node-postgres";import{Pool}from"pg";import{tasks}from"@shared/schema";import{eq}from"drizzle-orm";class DbStorage{static{__name(this,"DbStorage")}db;constructor(){const pool=new 
+Pool({connectionString:process.env.DATABASE_URL});this.db=drizzle(pool)}async getAllTasks(){return await this.db.select().from(tasks)}async getTask(id){const result=await this.db.select().from(tasks).where(eq(tasks.id,id));return result[0]}async createTask(task){const result=await this.db.insert(tasks).values(task).returning();return result[0]}async updateTask(id,taskUpdate){const result=await this.db.update(tasks).set(taskUpdate).where(eq(tasks.id,id)).returning();return result[0]}async deleteTask(id){const result=await this.db.delete(tasks).where(eq(tasks.id,id));return result.length>0}async getTasksByCategory(category){return await this.db.select().from(tasks).where(eq(tasks.category,category))}async getTasksByStatus(status){return await this.db.select().from(tasks).where(eq(tasks.status,status))}async getTasksByDueDate(date){const startOfDay=new Date(date);startOfDay.setHours(0,0,0,0);const endOfDay=new Date(date);endOfDay.setHours(23,59,59,999);return await this.db.select().from(tasks).where(sql`${tasks.dueDate} BETWEEN ${startOfDay} AND ${endOfDay}`)}}export{DbStorage};
+
+                                                            ^^^^
+SyntaxError: The requested module 'pg' does not provide an export named 'Pool'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:132:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:214:5)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:329:24)
+    at async loadESM (node:internal/process/esm_loader:28:7)
+    at async handleMainPromise (node:internal/modules/run_main:113:12)
+
+Node.js v20.11.0
