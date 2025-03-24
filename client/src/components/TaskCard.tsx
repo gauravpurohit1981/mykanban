@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Task } from "@shared/schema";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
