@@ -5,8 +5,14 @@ const { Pool } = pkg;
 import { tasks, type Task, type InsertTask } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+const poolerUrl = process.env.DATABASE_URL.replace('.us-east-2', '-pooler.us-east-2');
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: poolerUrl,
+  max: 10
 });
 
 const db = drizzle(pool);
